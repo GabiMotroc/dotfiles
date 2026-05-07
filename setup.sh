@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Installing zsh..."
-sudo apt install -y zsh
+echo "Installing zsh, gh, curl, git..."
+sudo apt install -y zsh gh curl git
 
 echo "Installing Oh My Zsh..."
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended

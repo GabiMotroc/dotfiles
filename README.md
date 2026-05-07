@@ -7,7 +7,15 @@ Alacritty + zsh + Oh My Zsh + powerlevel10k configuration.
 ```bash
 sudo apt install -y gh curl git zsh
 gh auth login
-git clone https://github.com/YOUR_USER/dotfiles.git ~/projects/dotfiles
-cd ~/projects/dotfiles
+git clone https://github.com/GabiMotroc/dotfiles.git ~/config/dotfiles
+cd ~/config/dotfiles
 ./setup.sh
+```
+
+After setup, optionally install tools:
+
+```bash
+./setup.sh --lazygit    # install lazygit
+./setup.sh --lazydocker # install lazydocker
+./setup.sh --all        # install everything
 ```

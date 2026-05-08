@@ -76,20 +76,20 @@ if (Test-Path $wtSettings) {
         $profileIndex = [array]::IndexOf($wt.profiles.list.guid, $pwshProfile.guid)
         if ($profileIndex -ge 0) {
             $font = $wt.profiles.list[$profileIndex].font
-            if (-not $font -or $font.face -ne "JetBrainsMono NF") {
+if (-not $font -or $font.face -ne "JetBrainsMono Nerd Font") {
                 if (-not $font) {
-                    $wt.profiles.list[$profileIndex] | Add-Member -NotePropertyName "font" -NotePropertyValue @{ face = "JetBrainsMono NF" } -Force
+                    $wt.profiles.list[$profileIndex] | Add-Member -NotePropertyName "font" -NotePropertyValue @{ face = "JetBrainsMono Nerd Font" } -Force
                 } else {
-                    $wt.profiles.list[$profileIndex].font.face = "JetBrainsMono NF"
+                    $wt.profiles.list[$profileIndex].font.face = "JetBrainsMono Nerd Font"
                 }
                 $fontChanged = $true
             }
         }
         if ($fontChanged -or $wt.defaultProfile -ne $pwshProfile.guid) {
             $wt | ConvertTo-Json -Depth 10 | Set-Content $wtSettings
-            if ($fontChanged) { Write-Host "Font set to JetBrainsMono NF." -ForegroundColor Green }
+            if ($fontChanged) { Write-Host "Font set to JetBrainsMono Nerd Font." -ForegroundColor Green }
         } else {
-            Write-Host "Font already set to JetBrainsMono NF." -ForegroundColor Yellow
+            Write-Host "Font already set to JetBrainsMono Nerd Font." -ForegroundColor Yellow
         }
     } else {
         Write-Host "PowerShell 7 profile not found in Windows Terminal. Restart Windows Terminal once then re-run." -ForegroundColor Yellow
@@ -103,9 +103,7 @@ Write-Step "Installing JetBrainsMono Nerd Font..."
 $fontUrl = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
 $fontZip = "$env:TEMP\JetBrainsMono.zip"
 $fontDir = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
-$fontReg = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
-$fontInstalled = Test-Path "$fontDir\JetBrainsMonoNerdFont-Regular.ttf"
-if (-not $fontInstalled) {
+if (-not (Test-Path "$fontDir\JetBrainsMonoNerdFont-Regular.ttf")) {
     Invoke-WebRequest -Uri $fontUrl -OutFile $fontZip -UseBasicParsing
     Expand-Archive -Path $fontZip -DestinationPath $fontDir -Force
     Remove-Item $fontZip
@@ -114,33 +112,23 @@ if (-not $fontInstalled) {
     Write-Host "JetBrainsMono NF already downloaded, skipping." -ForegroundColor Yellow
 }
 
-# Register fonts via GDI and registry
-Add-Type -AssemblyName System.Drawing
-Add-Type @"
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-public class FontReg {
-    [DllImport("gdi32.dll", SetLastError = true)]
-    public static extern int AddFontResource(string lpszFilename);
-    [DllImport("user32.dll", SetLastError = true)]
-    public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam, uint fuFlags, uint uTimeout, ref IntPtr lpdwResult);
+# Install to system font directory (elevated) so DirectWrite picks it up
+$sysFontDir = "$env:windir\Fonts"
+if (-not (Test-Path "$sysFontDir\JetBrainsMonoNerdFont-Regular.ttf")) {
+    $elevatedScript = Join-Path $PSScriptRoot "install-fonts-elevated.ps1"
+    $task = Register-ScheduledTask -TaskName "InstallJetBrainsFonts" `
+        -Action (New-ScheduledTaskAction -Execute "pwsh.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$elevatedScript`"") `
+        -RunLevel Highest -User $env:USERNAME -Force -ErrorAction SilentlyContinue
+    if ($task) {
+        Start-ScheduledTask -TaskName "InstallJetBrainsFonts"
+        Start-Sleep -Seconds 10
+        Unregister-ScheduledTask -TaskName "InstallJetBrainsFonts" -Confirm:$false
+    }
 }
-"@
-$added = 0
-$ttfs = Get-ChildItem $fontDir -Filter "*JetBrains*Nerd*Font*.ttf" | Where-Object { $_.Name -match '-(Regular|Bold|Italic|BoldItalic)\.ttf$' }
-foreach ($f in $ttfs) {
-    $family = [System.Drawing.Text.PrivateFontCollection]::new()
-    $family.AddFontFile($f.FullName)
-    $name = $family.Families[0].Name
-    $family.Dispose()
-    $regName = "$name (TrueType)"
-    Set-ItemProperty -Path $fontReg -Name $regName -Value $f.Name -Force -ErrorAction SilentlyContinue
-    [FontReg]::AddFontResource($f.FullName) | Out-Null
-    $added++
+if (Test-Path "$sysFontDir\JetBrainsMonoNerdFont-Regular.ttf") {
+    Write-Host "JetBrainsMono NF installed system-wide." -ForegroundColor Green
+} else {
+    Write-Host "Could not install system-wide. The font is available per-user; restart may be needed." -ForegroundColor Yellow
 }
-# Notify applications of font change
-$result = [IntPtr]::Zero; $null = [FontReg]::SendMessageTimeout([IntPtr]0xffff, 0x1d, [IntPtr]::Zero, [IntPtr]::Zero, 2, 5000, [ref]$result)
-Write-Host "Registered $added font files." -ForegroundColor Green
 
-Write-Host "`nDone! Restart your terminal to apply changes." -ForegroundColor Green
+Write-Host "`nDone! Restart Windows Terminal to apply changes." -ForegroundColor Green

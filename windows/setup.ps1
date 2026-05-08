@@ -67,10 +67,29 @@ if (Test-Path $wtSettings) {
     if ($pwshProfile) {
         if ($wt.defaultProfile -ne $pwshProfile.guid) {
             $wt.defaultProfile = $pwshProfile.guid
-            $wt | ConvertTo-Json -Depth 10 | Set-Content $wtSettings
             Write-Host "Windows Terminal default set to PowerShell 7." -ForegroundColor Green
         } else {
             Write-Host "Windows Terminal already defaults to PowerShell 7." -ForegroundColor Yellow
+        }
+        # Set font face to JetBrainsMono Nerd Font if not already set
+        $fontChanged = $false
+        $profileIndex = [array]::IndexOf($wt.profiles.list.guid, $pwshProfile.guid)
+        if ($profileIndex -ge 0) {
+            $font = $wt.profiles.list[$profileIndex].font
+            if (-not $font -or $font.face -ne "JetBrainsMono Nerd Font") {
+                if (-not $font) {
+                    $wt.profiles.list[$profileIndex] | Add-Member -NotePropertyName "font" -NotePropertyValue @{ face = "JetBrainsMono Nerd Font" } -Force
+                } else {
+                    $wt.profiles.list[$profileIndex].font.face = "JetBrainsMono Nerd Font"
+                }
+                $fontChanged = $true
+            }
+        }
+        if ($fontChanged -or $wt.defaultProfile -ne $pwshProfile.guid) {
+            $wt | ConvertTo-Json -Depth 10 | Set-Content $wtSettings
+            if ($fontChanged) { Write-Host "Font set to JetBrainsMono Nerd Font." -ForegroundColor Green }
+        } else {
+            Write-Host "Font already set to JetBrainsMono Nerd Font." -ForegroundColor Yellow
         }
     } else {
         Write-Host "PowerShell 7 profile not found in Windows Terminal. Restart Windows Terminal once then re-run." -ForegroundColor Yellow
@@ -93,6 +112,4 @@ if (-not (Test-Path "$fontDir\JetBrainsMonoNerdFont-Regular.ttf")) {
     Write-Host "JetBrainsMono NF already installed, skipping." -ForegroundColor Yellow
 }
 
-Write-Host "`nDone!" -ForegroundColor Green
-Write-Host "Set JetBrainsMono NF in Windows Terminal: Settings > PowerShell > Appearance > Font face" -ForegroundColor Cyan
-Write-Host "Then restart your terminal to apply changes." -ForegroundColor Cyan
+Write-Host "`nDone! Restart your terminal to apply changes." -ForegroundColor Green

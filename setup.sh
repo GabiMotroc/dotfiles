@@ -24,6 +24,7 @@ install_or_update() {
     local url=$1 dir=$2 name=$3
     if [ ! -d "$dir" ]; then
         echo "Installing $name..."
+        mkdir -p "$(dirname "$dir")"
         git clone --depth=1 "$url" "$dir"
     else
         echo "Updating $name..."
@@ -39,6 +40,11 @@ apt_install() {
 echo "Installing system packages..."
 apt_install zsh gh curl git
 
+if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+    echo "Installing Oh My Zsh..."
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
+
 install_or_update https://github.com/romkatv/powerlevel10k.git \
     "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k" powerlevel10k
 
@@ -47,19 +53,17 @@ for plugin in zsh-autosuggestions zsh-syntax-highlighting; do
         "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/$plugin" "$plugin"
 done
 
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    echo "Installing Oh My Zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-fi
-
 echo "Copying configs..."
 mkdir -p ~/.config/alacritty
 cp alacritty.toml ~/.config/alacritty/alacritty.toml
 cp .zshrc ~/.zshrc
 
-if [ "$INSTALL_LAZYGIT" = true ]; then
+if [ "$INSTALL_LAZYGIT" = true ] && ! command -v lazygit &>/dev/null; then
     echo "Installing lazygit..."
-    apt_install lazygit
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": *"v\K[^"]*')
+    curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
+    rm /tmp/lazygit.tar.gz
 fi
 
 if [ "$INSTALL_LAZYDOCKER" = true ] && ! command -v lazydocker &>/dev/null; then

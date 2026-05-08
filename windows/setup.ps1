@@ -58,6 +58,27 @@ if ($profileContent -notlike "*oh-my-posh*") {
 } else {
     Write-Host "Profile already has oh-my-posh, skipping." -ForegroundColor Yellow
 }
+# Set PowerShell 7 as the default profile in Windows Terminal
+Write-Step "Setting PowerShell 7 as default terminal profile..."
+$wtSettings = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+if (Test-Path $wtSettings) {
+    $wt = Get-Content $wtSettings -Raw | ConvertFrom-Json
+    $pwshProfile = $wt.profiles.list | Where-Object { $_.source -eq "Windows.Terminal.PowershellCore" }
+    if ($pwshProfile) {
+        if ($wt.defaultProfile -ne $pwshProfile.guid) {
+            $wt.defaultProfile = $pwshProfile.guid
+            $wt | ConvertTo-Json -Depth 10 | Set-Content $wtSettings
+            Write-Host "Windows Terminal default set to PowerShell 7." -ForegroundColor Green
+        } else {
+            Write-Host "Windows Terminal already defaults to PowerShell 7." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "PowerShell 7 profile not found in Windows Terminal. Restart Windows Terminal once then re-run." -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "Windows Terminal settings not found, skipping." -ForegroundColor Yellow
+}
+
 Write-Host "`nDone!" -ForegroundColor Green
 Write-Host "Remaining manual step:" -ForegroundColor Cyan
 Write-Host "  Install JetBrainsMono NF font from https://www.nerdfonts.com" -ForegroundColor White

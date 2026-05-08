@@ -79,8 +79,20 @@ if (Test-Path $wtSettings) {
     Write-Host "Windows Terminal settings not found, skipping." -ForegroundColor Yellow
 }
 
+# Install JetBrainsMono Nerd Font
+Write-Step "Installing JetBrainsMono Nerd Font..."
+$fontUrl = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+$fontZip = "$env:TEMP\JetBrainsMono.zip"
+$fontDir = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+if (-not (Test-Path "$fontDir\JetBrainsMonoNerdFont-Regular.ttf")) {
+    Invoke-WebRequest -Uri $fontUrl -OutFile $fontZip -UseBasicParsing
+    Expand-Archive -Path $fontZip -DestinationPath $fontDir -Force
+    Remove-Item $fontZip
+    Write-Host "JetBrainsMono NF installed." -ForegroundColor Green
+} else {
+    Write-Host "JetBrainsMono NF already installed, skipping." -ForegroundColor Yellow
+}
+
 Write-Host "`nDone!" -ForegroundColor Green
-Write-Host "Remaining manual step:" -ForegroundColor Cyan
-Write-Host "  Install JetBrainsMono NF font from https://www.nerdfonts.com" -ForegroundColor White
-Write-Host "  Then set it in Windows Terminal: Settings > PowerShell > Appearance > Font" -ForegroundColor White
-Write-Host "`nRestart your terminal to apply changes." -ForegroundColor Cyan
+Write-Host "Set JetBrainsMono NF in Windows Terminal: Settings > PowerShell > Appearance > Font face" -ForegroundColor Cyan
+Write-Host "Then restart your terminal to apply changes." -ForegroundColor Cyan

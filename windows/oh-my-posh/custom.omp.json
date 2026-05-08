@@ -1,0 +1,107 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 2,
+  "final_space": true,
+  "console_title_template": "{{ .Folder }}",
+  "palettes": {
+    "template": "catppuccin_mocha",
+    "list": {
+      "catppuccin_mocha": {
+        "base":    "#1e1e2e",
+        "mantle":  "#181825",
+        "crust":   "#11111b",
+        "text":    "#cdd6f4",
+        "subtext": "#a6adc8",
+        "blue":    "#89b4fa",
+        "lavender":"#b4befe",
+        "sapphire":"#75c7ec",
+        "sky":     "#89dceb",
+        "teal":    "#94e2d5",
+        "green":   "#a6e3a1",
+        "yellow":  "#f9e2af",
+        "peach":   "#fab387",
+        "red":     "#f38ba8",
+        "maroon":  "#eba0ac",
+        "pink":    "#f5c2e7",
+        "mauve":   "#cba6f7",
+        "overlay": "#6c7086"
+      }
+    }
+  },
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "path",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:base",
+          "background": "p:blue",
+          "properties": {
+            "style": "agnoster_short",
+            "max_depth": 3
+          },
+          "template": "  {{ .Path }} "
+        },
+        {
+          "type": "git",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:base",
+          "background": "p:green",
+          "background_templates": [
+            "{{ if or .Working.Changed .Staging.Changed }}p:yellow{{ end }}",
+            "{{ if and (gt .Behind 0) (gt .Ahead 0) }}p:peach{{ end }}",
+            "{{ if gt .Behind 0 }}p:red{{ end }}",
+            "{{ if gt .Ahead 0 }}p:teal{{ end }}"
+          ],
+          "properties": {
+            "fetch_status": true,
+            "fetch_upstream_icon": true
+          },
+          "template": "  {{ .UpstreamIcon }}{{ .HEAD }}{{ if .Working.Changed }} \uf044 {{ .Working.String }}{{ end }}{{ if .Staging.Changed }} \uf046 {{ .Staging.String }}{{ end }} "
+        },
+        {
+          "type": "executiontime",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:base",
+          "background": "p:peach",
+          "properties": {
+            "threshold": 2000,
+            "style": "austin"
+          },
+          "template": " \uf252 {{ .FormattedMs }} "
+        },
+        {
+          "type": "exit",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:base",
+          "background": "p:green",
+          "background_templates": [
+            "{{ if gt .Code 0 }}p:red{{ end }}"
+          ],
+          "properties": {
+            "always_enabled": false
+          },
+          "template": " {{ if gt .Code 0 }}\uf00d {{ .Code }}{{ else }}\uf00c{{ end }} "
+        }
+      ]
+    },
+    {
+      "type": "rprompt",
+      "alignment": "right",
+      "segments": [
+        {
+          "type": "time",
+          "style": "plain",
+          "foreground": "p:overlay",
+          "template": "\uf017 {{ .CurrentDate | date \"15:04:05\" }} "
+        }
+      ]
+    }
+  ]
+}

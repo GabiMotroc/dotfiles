@@ -9,7 +9,7 @@ sudo apt install -y gh curl git zsh
 gh auth login
 git clone https://github.com/GabiMotroc/dotfiles.git ~/config/dotfiles
 cd ~/config/dotfiles
-./setup.sh
+bash setup.sh
 ```
 
 After setup, optionally install tools:

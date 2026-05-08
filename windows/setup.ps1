@@ -1,15 +1,28 @@
-#Requires -Version 7
 <#
 .SYNOPSIS
     Windows dev environment bootstrap from GabiMotroc/dotfiles.
 .DESCRIPTION
-    Installs Oh My Posh and lazygit, pulls the custom theme from GitHub
-    and puts it in the right place. Run this on any new Windows machine.
+    Installs PowerShell 7, Oh My Posh, and lazygit, then applies
+    the custom oh-my-posh theme. Run this on any new Windows machine.
+    If running from PowerShell 5.1 it installs pwsh and re-launches itself.
 .EXAMPLE
     irm https://raw.githubusercontent.com/GabiMotroc/dotfiles/main/windows/setup.ps1 | iex
 #>
 $ErrorActionPreference = "Stop"
-$repoRaw  = "https://raw.githubusercontent.com/GabiMotroc/dotfiles/main"
+
+# Bootstrap: ensure we're running under PowerShell 7+
+if ($PSVersionTable.PSEdition -ne 'Core') {
+    Write-Host ">> PowerShell 7 required. Installing..." -ForegroundColor Cyan
+    $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+    if (-not $pwsh) {
+        winget install --id Microsoft.PowerShell --silent --accept-package-agreements --accept-source-agreements
+        $pwsh = Get-Command pwsh.exe -ErrorAction SilentlyContinue
+        if (-not $pwsh) { throw "PowerShell 7 installation failed." }
+    }
+    & $pwsh.Source -NoProfile -File $MyInvocation.MyCommand.Path
+    exit $LASTEXITCODE
+}
+$localRepo  = "$PSScriptRoot\.."
 $themeDest = "$env:USERPROFILE\oh-my-posh\themes\custom.omp.json"
 $profileLine = 'oh-my-posh init pwsh --config "$env:USERPROFILE\oh-my-posh\themes\custom.omp.json" | Invoke-Expression'
 function Write-Step($msg) {
@@ -28,10 +41,10 @@ function Install-WingetPackage($id, $name) {
 # Install tools
 Install-WingetPackage "JanDeDobbeleer.OhMyPosh" "Oh My Posh"
 Install-WingetPackage "JesseDuffield.lazygit"    "lazygit"
-# Pull and apply oh-my-posh theme
-Write-Step "Pulling Oh My Posh theme from dotfiles repo..."
+# Copy oh-my-posh theme from local repo
+Write-Step "Copying Oh My Posh theme from local repo..."
 New-Item -ItemType Directory -Path (Split-Path $themeDest) -Force | Out-Null
-Invoke-WebRequest "$repoRaw/windows/oh-my-posh/custom.omp.json" -OutFile $themeDest
+Copy-Item -Path "$localRepo\windows\oh-my-posh\custom.omp.json" -Destination $themeDest -Force
 Write-Host "Theme saved to $themeDest" -ForegroundColor Green
 # Add to PowerShell profile if not already there
 Write-Step "Updating PowerShell profile..."

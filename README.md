@@ -12,7 +12,10 @@ cd ~/config/dotfiles
 bash setup.sh
 ```
 
-After setup, optionally install tools:
+After setup, optionally configure tools:
+- [opencode](opencode.md) — LSP-enabled AI coding agent
+
+Optionally install more tools:
 
 ```bash
 ./setup.sh --lazygit    # install lazygit
